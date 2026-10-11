@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750">
+<defs>
+<linearGradient id="g" gradientTransform="rotate(0 .5 .5)"><stop offset="0" stop-color="#1e3a8a"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
+<radialGradient id="l" cx="0.16666666666666666" cy=".25" r=".7"><stop offset="0" stop-color="#bfdbfe" stop-opacity=".55"/><stop offset="1" stop-color="#bfdbfe" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1200" height="750" fill="url(#g)"/>
+<rect width="1200" height="750" fill="url(#l)"/>
+<g fill="none" stroke="#bfdbfe" stroke-opacity=".18" stroke-width="2">
+<path d="M-50 520 C 300 430, 700 640, 1250 480"/>
+<path d="M-50 554 C 300 460, 700 662, 1250 516"/>
+<path d="M-50 588 C 300 490, 700 684, 1250 552"/>
+<path d="M-50 622 C 300 520, 700 706, 1250 588"/>
+<path d="M-50 656 C 300 550, 700 728, 1250 624"/>
+<path d="M-50 690 C 300 580, 700 750, 1250 660"/>
+<path d="M-50 724 C 300 610, 700 772, 1250 696"/>
+</g>
+<g font-family="system-ui, sans-serif" font-size="22" fill="#fff" fill-opacity=".8"><rect x="24" y="24" width="150" height="40" rx="20" fill="#000" fill-opacity=".25"/><text x="99" y="51" text-anchor="middle" direction="rtl">صورة مؤقتة</text></g>
+</svg>

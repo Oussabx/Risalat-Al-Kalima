@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img" aria-label="صورة مؤقتة">
+<defs><linearGradient id="s2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fca5a5"/><stop offset="1" stop-color="#fde68a"/></linearGradient>
+<radialGradient id="g2"><stop offset="0" stop-color="#fff7ed" stop-opacity=".95"/><stop offset="1" stop-color="#fff7ed" stop-opacity="0"/></radialGradient></defs>
+<rect width="1600" height="900" fill="url(#s2)"/>
+<circle cx="697" cy="283" r="260" fill="url(#g2)"/>
+<circle cx="697" cy="283" r="70" fill="#fff7ed" opacity=".9"/>
+<path d="M0 900 L0 520 Q100 479 200 447 Q300 503 400 482 Q500 578 600 548 Q700 478 800 559 Q900 504 1000 515 Q1100 578 1200 496 Q1300 477 1400 537 Q1500 505 1600 573 L1600 900 Z" fill="#f59e0b" opacity="0.75"/>
+<path d="M0 900 L0 640 Q100 657 200 642 Q300 676 400 618 Q500 587 600 648 Q700 658 800 682 Q900 675 1000 656 Q1100 587 1200 593 Q1300 659 1400 577 Q1500 674 1600 634 L1600 900 Z" fill="#c2410c" opacity="0.9"/>
+<path d="M0 900 L0 760 Q100 731 200 716 Q300 749 400 722 Q500 801 600 774 Q700 730 800 807 Q900 750 1000 784 Q1100 800 1200 743 Q1300 730 1400 741 Q1500 750 1600 771 L1600 900 Z" fill="#7c2d12" opacity="1"/>
+<g transform="translate(40 808)"><rect width="196" height="52" rx="26" fill="#0f172a" opacity=".55"/><text x="98" y="34" text-anchor="middle" font-family="IBM Plex Sans Arabic, Tahoma, sans-serif" font-size="24" fill="#fff">صورة مؤقتة</text></g>
+</svg>

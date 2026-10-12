@@ -53,5 +53,40 @@ export async function gotoAndSettle(page: Page, path: string): Promise<void> {
   expect(response!.status(), `status for ${path}`).toBeLessThan(400);
   await expect(page.locator('main#main')).toBeVisible();
   await page.evaluate(() => document.fonts?.ready.then(() => undefined));
-  await page.waitForLoadState('networkidle').catch(() => undefined);
+  // Best effort: Next.js link prefetches can leave requests Chromium never reports as finished.
+  await page.waitForLoadState('networkidle', { timeout: 3_000 }).catch(() => undefined);
+}
+
+/** Decoded current pathname (Arabic slugs arrive percent-encoded in `page.url()`). */
+export function currentPath(page: Page): string {
+  return decodeURIComponent(new URL(page.url()).pathname).normalize('NFC');
+}
+
+/** Waits until the decoded pathname equals `path`. */
+export async function expectPath(page: Page, path: string): Promise<void> {
+  await expect.poll(() => currentPath(page), { message: `expected to be on ${path}` }).toBe(path.normalize('NFC'));
+}
+
+/** Titles of the article cards in the main listing of an archive page, in display order. */
+export async function archiveTitles(page: Page): Promise<string[]> {
+  return page.locator('main section ul > li article h2').allInnerTexts().then((all) => all.map((t) => t.trim()));
+}
+
+/**
+ * Gives this test its own client IP for the rate-limited form endpoints, so
+ * parallel tests and both projects never share (and exhaust) one bucket.
+ */
+export async function isolateRateLimit(page: Page): Promise<void> {
+  const ip = `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
+  await page.route('**/api/**', (route) => route.continue({ headers: { ...route.request().headers(), 'x-real-ip': ip } }));
+}
+
+/** The header's menu button (hamburger on phones, mega-menu toggle on desktop). */
+export function menuButton(page: Page) {
+  return page.locator('header[data-site-header]').getByRole('button', { name: 'القائمة', exact: true });
+}
+
+/** The header's search icon button. */
+export function searchButton(page: Page) {
+  return page.locator('header[data-site-header]').getByRole('button', { name: 'البحث', exact: true });
 }

@@ -14,12 +14,15 @@ export function Logo({
   tone = 'brand',
   asLink = true,
   className = '',
+  priority = false,
 }: {
   logo?: ImageRef;
   size?: 'sm' | 'md' | 'lg';
   tone?: 'brand' | 'light';
   asLink?: boolean;
   className?: string;
+  /** Only the header logo is fetched with high priority. */
+  priority?: boolean;
 }) {
   const height = size === 'lg' ? 56 : size === 'sm' ? 34 : 44;
   const content = logo ? (
@@ -32,7 +35,7 @@ export function Logo({
       style={{ height, width: 'auto' }}
       className="block max-w-[220px] object-contain"
       decoding="async"
-      fetchPriority="high"
+      fetchPriority={priority ? 'high' : 'auto'}
     />
   ) : (
     <span

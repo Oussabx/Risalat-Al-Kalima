@@ -29,7 +29,13 @@ function withQuery(path: string, params: Record<string, string | number | undefi
 
 /** Absolute URL for canonical links, Open Graph and structured data. */
 export function absoluteUrl(path: string, base: string): string {
-  return new URL(encodeURI(decodeURI(path)), base).toString();
+  let decoded = path;
+  try {
+    decoded = decodeURI(path);
+  } catch {
+    // Malformed percent sequence: encode the raw path as-is.
+  }
+  return new URL(encodeURI(decoded), base).toString();
 }
 
 /** Reads a positive page number from a search param. */

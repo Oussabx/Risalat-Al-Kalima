@@ -17,7 +17,6 @@ export const CONTACT_LIMITS = {
 } as const;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-// eslint-disable-next-line no-control-regex -- strips control characters from user input
 const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
 
 /** Length as people count it: an emoji or any other astral character counts once. */

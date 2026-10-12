@@ -101,7 +101,11 @@ export function ArticleCard({
     >
       <div className="relative">
         <PostImage image={article.image} sizes={sizes ?? '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw'} priority={priority} zoom />
-        {category ? <CategoryBadge category={category} className="absolute bottom-3 left-3" /> : null}
+        {category ? (
+          <div className="absolute bottom-3 left-3 z-10">
+            <CategoryBadge category={category} />
+          </div>
+        ) : null}
       </div>
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <H className="text-[1.0625rem] leading-[1.65] font-bold text-ink transition-colors group-hover:text-brand-700">{titleLink}</H>

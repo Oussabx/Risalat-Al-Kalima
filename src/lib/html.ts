@@ -94,7 +94,10 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
       attribs: { ...attribs, loading: 'lazy', title: attribs.title || 'فيديو مضمّن', referrerpolicy: 'strict-origin-when-cross-origin' },
     }),
   },
-  exclusiveFilter: (frame) => frame.tag === 'p' && !frame.text.trim() && !frame.mediaChildren?.length,
+  exclusiveFilter: (frame) =>
+    (frame.tag === 'p' && !frame.text.trim() && !frame.mediaChildren?.length) ||
+    // A blocked iframe (disallowed host or scheme) loses its src; drop the empty frame entirely.
+    (frame.tag === 'iframe' && !frame.attribs.src),
 };
 
 /** Sanitises CMS HTML with an allowlist. Safe to inject with dangerouslySetInnerHTML. */

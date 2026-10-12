@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { ArticleView, type ArticleViewData } from '@/components/article/ArticleView';
 import { StaticPageView } from '@/components/StaticPageView';
 import { decodeSlug, stripHtml, truncate } from '@/lib/arabic';
@@ -28,6 +28,9 @@ async function resolve(params: Props['params']) {
   const slug = decodeSlug((await params).slug);
   const article = await getArticle(slug);
   if (article) return { article, page: null };
+  // The WordPress About/Contact pages live at /about/ and /contact/ here; never serve them twice.
+  if (slug === site.aboutPageSlug) permanentRedirect(routes.about());
+  if (slug === site.contactPageSlug) permanentRedirect(routes.contact());
   const page = await getPage(slug);
   return { article: null, page };
 }

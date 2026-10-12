@@ -23,7 +23,7 @@ export async function SiteHeader() {
   };
   return (
     <HeaderBar
-      logo={<Logo logo={identity.logo} className="min-h-11" />}
+      logo={<Logo logo={identity.logo} className="min-h-11" priority />}
       drawerLogo={<Logo logo={identity.logo} size="sm" className="min-h-11" />}
       navigation={nav}
       social={socialLinks}

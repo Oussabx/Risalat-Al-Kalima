@@ -3,7 +3,7 @@ import type { Category } from '@/lib/content/types';
 import { routes } from '@/lib/routes';
 
 /** «أقسام ذات صلة»: sibling categories from the same menu group, as chips. */
-export function RelatedCategories({ categories, title = 'أقسام ذات صلة', groupTitle }: { categories: Category[]; title?: string; groupTitle?: string }) {
+export function RelatedCategories({ categories, title = 'أقسام ذات صلة' }: { categories: Category[]; title?: string }) {
   if (!categories.length) return null;
   return (
     <section aria-labelledby="related-categories-title" className="mt-14 border-t border-line pt-8 sm:mt-16">
@@ -11,7 +11,6 @@ export function RelatedCategories({ categories, title = 'أقسام ذات صل�
         <span className="h-5 w-1.5 shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
         {title}
       </h2>
-      {groupTitle ? <p className="ms-[1.125rem] mt-1 text-sm text-muted">من مجموعة «{groupTitle}»</p> : null}
       <ul role="list" className="mt-5 flex flex-wrap gap-2.5">
         {categories.map((category) => (
           <li key={category.id}>

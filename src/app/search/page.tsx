@@ -123,8 +123,8 @@ function SearchResults({ q, category, page, result }: { q: string; category: str
   const position = pageOf(page, result.totalPages);
   return (
     <section aria-labelledby="search-results-title">
-      <h2 id="search-results-title" className="text-h2 font-bold text-ink">
-        {result.total ? resultsLabel(result.total) : 'لا نتائج'} لـ “{q}”{active ? ` في «${active.name}»` : ''}
+      <h2 id="search-results-title" className="text-h2 font-bold text-ink [overflow-wrap:anywhere]">
+        {result.total ? resultsLabel(result.total) : 'لا نتائج'} لـ “<bdi>{q}</bdi>”{active ? ` في «${active.name}»` : ''}
       </h2>
       {position ? <p className="mt-1 text-sm text-muted">{position}</p> : null}
       {facetRow}

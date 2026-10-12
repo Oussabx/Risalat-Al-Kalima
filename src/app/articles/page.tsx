@@ -94,7 +94,7 @@ export default async function ArticlesPage({ searchParams }: Props) {
               <>
                 {q ? (
                   <>
-                    نتائج «<span className="font-semibold text-ink">{q}</span>»{category ? ` في قسم «${category.name}»` : ''}:{' '}
+                    نتائج «<bdi className="font-semibold text-ink">{q}</bdi>»{category ? ` في قسم «${category.name}»` : ''}:{' '}
                   </>
                 ) : category ? (
                   `قسم «${category.name}»: `
@@ -119,7 +119,7 @@ export default async function ArticlesPage({ searchParams }: Props) {
               title={filtered ? 'لا توجد مقالات مطابقة' : 'لا توجد مقالات بعد'}
               description={
                 q
-                  ? `لم نجد مقالات تطابق «${q}»${category ? ` في قسم «${category.name}»` : ''}. تحقّق من الإملاء، أو جرّب كلمات أقلّ، أو استخدم البحث الشامل الذي يشمل أسماء الكتّاب والوسوم.`
+                  ? `لم نجد مقالات تطابق بحثك${category ? ` في قسم «${category.name}»` : ''}. تحقّق من الإملاء، أو جرّب كلمات أقلّ، أو استخدم البحث الشامل الذي يشمل أسماء الكتّاب والوسوم.`
                   : category
                     ? `لم يُنشر في قسم «${category.name}» أيّ مقال بعد.`
                     : 'ستظهر المقالات هنا فور نشرها.'

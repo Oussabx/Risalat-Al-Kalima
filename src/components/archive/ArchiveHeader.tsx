@@ -21,7 +21,7 @@ export function ArchiveHeader({
   title: string;
   eyebrow?: string;
   description?: string;
-  /** Number of articles in the archive, shown as «24 مقالًا». */
+  /** Number of articles in the archive, shown as «24 مقالًا» (hidden when 0: the empty state says it). */
   count?: number;
   media?: React.ReactNode;
   breadcrumbs?: Crumb[];
@@ -38,7 +38,7 @@ export function ArchiveHeader({
             {eyebrow ? <p className="eyebrow mb-2">{eyebrow}</p> : null}
             <h1 className="text-[1.75rem] leading-[1.45] font-bold text-ink sm:text-h1">{title}</h1>
             {description ? <p className="mt-3 max-w-2xl text-base leading-[1.9] text-ink-soft">{description}</p> : null}
-            {count !== undefined ? (
+            {count ? (
               <p className="mt-4 inline-flex items-center rounded-full bg-white/85 px-3.5 py-1 text-meta font-semibold text-brand-700 ring-1 ring-brand-200">
                 {articlesLabel(count)}
               </p>

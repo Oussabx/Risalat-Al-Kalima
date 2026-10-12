@@ -130,7 +130,7 @@ export default async function CategoryPage(props: Props) {
 
         {outOfRange ? null : <Pagination page={page} totalPages={data.totalPages} hrefFor={(p) => href({ page: p })} />}
 
-        <RelatedCategories categories={siblings.categories} groupTitle={siblings.title} />
+        <RelatedCategories categories={siblings.categories} />
       </div>
     </>
   );

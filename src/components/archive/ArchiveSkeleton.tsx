@@ -19,6 +19,7 @@ export function ArchiveSkeleton({ variant = 'grid', chips = true, form = false }
         </div>
       </div>
       <div className="container-site py-8 sm:py-10" aria-hidden="true">
+        {variant === 'list' ? <div className="skeleton mb-5 h-7 w-56 max-w-full" /> : null}
         {chips ? (
           <div className="flex gap-2 overflow-hidden py-1">
             {[56, 88, 72, 104, 80, 96, 64].map((w, i) => (
@@ -26,11 +27,13 @@ export function ArchiveSkeleton({ variant = 'grid', chips = true, form = false }
             ))}
           </div>
         ) : null}
-        <div className="mt-5 flex items-center justify-between gap-4 border-b border-line pb-5">
-          <div className="skeleton h-4 w-36" />
-          <div className="skeleton h-11 w-56 rounded-full" />
-        </div>
-        <div className="mt-8">{variant === 'list' ? <ListSkeleton /> : <GridSkeleton />}</div>
+        {variant === 'grid' ? (
+          <div className="mt-5 flex items-center justify-between gap-4 border-b border-line pb-5">
+            <div className="skeleton h-4 w-36" />
+            <div className="skeleton h-11 w-56 rounded-full" />
+          </div>
+        ) : null}
+        <div className={variant === 'grid' ? 'mt-8' : 'mt-6'}>{variant === 'list' ? <ListSkeleton /> : <GridSkeleton />}</div>
       </div>
     </div>
   );

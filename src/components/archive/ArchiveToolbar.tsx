@@ -2,7 +2,7 @@
 export function ArchiveToolbar({ summary, children, className = '' }: { summary: React.ReactNode; children?: React.ReactNode; className?: string }) {
   return (
     <div className={`flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-line pb-5 ${className}`}>
-      <p className="text-sm leading-relaxed text-ink-soft">{summary}</p>
+      <p className="min-w-0 text-sm leading-relaxed text-ink-soft [overflow-wrap:anywhere]">{summary}</p>
       {children}
     </div>
   );

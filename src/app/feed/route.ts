@@ -26,7 +26,7 @@ function rfc822(iso: string): string | null {
 
 function item(article: ArticleSummary): string {
   const link = absoluteUrl(routes.article(article.slug), site.url);
-  const pubDate = rfc822(article.date);
+  const pubDate = rfc822(article.published);
   return [
     '    <item>',
     `      <title>${xml(article.title)}</title>`,
@@ -45,7 +45,9 @@ function item(article: ArticleSummary): string {
 export async function GET() {
   const { items } = await listArticles({ perPage: 20, order: 'newest' });
   const self = absoluteUrl(routes.feed(), site.url);
-  const lastBuild = rfc822(items[0]?.modified || items[0]?.date || '') ?? new Date().toUTCString();
+  // The latest change among the listed items (an older article may have been edited most recently).
+  const latestUpdate = items.reduce<string>((max, a) => (Date.parse(a.updated) > Date.parse(max) ? a.updated : max), items[0]?.updated ?? '');
+  const lastBuild = rfc822(latestUpdate) ?? new Date().toUTCString();
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">

@@ -11,7 +11,7 @@ import { SiteHeader } from '@/components/header/SiteHeader';
 import { JsonLd } from '@/components/JsonLd';
 import { PreviewBanner } from '@/components/PreviewBanner';
 import { getIdentity, isPreview } from '@/lib/content';
-import { site } from '@/lib/site';
+import { defaultOpenGraph, feedAlternates, site } from '@/lib/site';
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await getIdentity();
@@ -20,8 +20,9 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: `${site.fullName} — ${identity.description || site.shortDescription}`, template: `%s — ${site.fullName}` },
     description: site.description,
     applicationName: site.fullName,
-    alternates: { canonical: '/', types: { 'application/rss+xml': [{ url: '/feed/', title: site.fullName }] } },
-    openGraph: { type: 'website', siteName: site.fullName, locale: site.locale, title: site.fullName, description: site.description, url: '/' },
+    // No canonical or og:url here: every page would inherit '/'. Pages set their own (the home page included).
+    alternates: { types: feedAlternates },
+    openGraph: defaultOpenGraph,
     twitter: { card: 'summary_large_image' },
     icons: identity.icon ? { icon: identity.icon, apple: identity.icon } : undefined,
     robots: isPreview ? { index: false, follow: false } : { index: true, follow: true },

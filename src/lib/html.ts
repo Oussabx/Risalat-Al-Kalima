@@ -56,15 +56,22 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     iframe: ['src', 'width', 'height', 'title', 'allow', 'allowfullscreen', 'loading', 'referrerpolicy'],
     video: ['src', 'controls', 'poster', 'width', 'height', 'preload', 'playsinline'],
     audio: ['src', 'controls', 'preload'],
-    h2: ['id'],
-    h3: ['id'],
-    h4: ['id'],
-    td: ['colspan', 'rowspan'],
-    th: ['colspan', 'rowspan', 'scope'],
+    p: ['style'],
+    div: ['style'],
+    figure: ['style'],
+    h2: ['id', 'style'],
+    h3: ['id', 'style'],
+    h4: ['id', 'style'],
+    h5: ['style'],
+    h6: ['style'],
+    td: ['colspan', 'rowspan', 'style'],
+    th: ['colspan', 'rowspan', 'scope', 'style'],
     ol: ['start', 'reversed', 'type'],
     blockquote: ['cite'],
     '*': ['class', 'dir', 'lang'],
   },
+  // Only the block alignment set in the WordPress editor survives; every other declaration is dropped.
+  allowedStyles: { '*': { 'text-align': [/^(left|right|center|justify|start|end)$/] } },
   allowedSchemes: ['http', 'https', 'mailto', 'tel'],
   allowedSchemesByTag: { img: ['http', 'https', 'data'] },
   allowedIframeHostnames: IFRAME_HOSTS,
@@ -108,28 +115,48 @@ export function sanitize(html: string): string {
 const SAFE_ID = /^[\p{L}\p{N}_-]{1,80}$/u;
 
 /**
+ * Ids the page itself renders around the article body (layout, header dialogs,
+ * article chrome). A CMS heading may not take them, or #main, the skip link or
+ * aria references would point at the wrong element.
+ */
+const RESERVED_IDS = [
+  'main', 'article-body', 'toc-title', 'related-title', 'adjacent-title', 'author-box-title',
+  'site-mega-menu', 'site-drawer', 'site-search', 'footer-sections', 'footer-newsletter', 'footer-magazine', 'footer-browse',
+];
+/** Prefixes of generated page ids (e.g. the mega-menu group headings `site-mega-menu-g0`). */
+const RESERVED_ID_PREFIX = /^site-/;
+
+/**
  * Prepares CMS article HTML for rendering: sanitises it, gives h2/h3 headings
  * anchors for the table of contents, wraps tables for horizontal scrolling and
- * keeps internal links inside the new front end.
+ * keeps internal links inside the new front end. Every heading id in the output
+ * (h2–h4) is unique and never clashes with an id of the surrounding page.
  */
 export function prepareContent(html: string): { html: string; headings: Heading[] } {
   let out = sanitize(html);
 
   const headings: Heading[] = [];
-  const used = new Set<string>();
+  const used = new Set<string>(RESERVED_IDS);
+  const usable = (id: string | undefined): id is string => Boolean(id && SAFE_ID.test(id) && !used.has(id) && !RESERVED_ID_PREFIX.test(id));
   let n = 0;
-  out = out.replace(/<h([23])((?:\s[^>]*)?)>([\s\S]*?)<\/h\1>/gi, (match, level: string, attrs: string, inner: string) => {
-    const text = stripHtml(inner);
-    if (!text) return match;
+  out = out.replace(/<h([234])((?:\s[^>]*)?)>([\s\S]*?)<\/h\1>/gi, (match, level: string, attrs: string, inner: string) => {
     const existing = /\sid="([^"]+)"/i.exec(attrs)?.[1];
-    let id = existing && SAFE_ID.test(existing) && !used.has(existing) ? existing : '';
+    const cleanAttrs = attrs.replace(/\sid="[^"]*"/i, '');
+    const text = level === '4' ? '' : stripHtml(inner);
+    // h4 and empty headings are not in the outline: they keep a usable CMS id (for in-text anchors) and never get a generated one.
+    if (!text) {
+      if (existing === undefined) return match;
+      if (!usable(existing)) return `<h${level}${cleanAttrs}>${inner}</h${level}>`;
+      used.add(existing);
+      return match;
+    }
+    let id = usable(existing) ? existing : '';
     if (!id) {
       do id = `section-${++n}`;
       while (used.has(id));
     }
     used.add(id);
     headings.push({ id, text, level: Number(level) as 2 | 3 });
-    const cleanAttrs = attrs.replace(/\sid="[^"]*"/i, '');
     return `<h${level}${cleanAttrs} id="${id}">${inner}</h${level}>`;
   });
 

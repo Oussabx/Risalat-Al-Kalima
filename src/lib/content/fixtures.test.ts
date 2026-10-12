@@ -49,6 +49,15 @@ describe('fixtures data integrity', () => {
     }
   });
 
+  it('exposes UTC publication and update instants for feeds and structured data', () => {
+    for (const a of articles) {
+      expect(a.published, a.slug).toMatch(/Z$/);
+      expect(Number.isNaN(Date.parse(a.published)), a.slug).toBe(false);
+      expect(isoDate(a.published)).toBe(isoDate(a.date));
+      expect(Date.parse(a.updated)).toBeGreaterThanOrEqual(Date.parse(a.published));
+    }
+  });
+
   it('category and tag counts match the articles', () => {
     for (const c of categories) expect(c.count, c.name).toBe(articles.filter((a) => a.categories.some((x) => x.id === c.id)).length);
     for (const t of tags) expect(t.count, t.name).toBe(articles.filter((a) => a.tags.some((x) => x.id === t.id)).length);

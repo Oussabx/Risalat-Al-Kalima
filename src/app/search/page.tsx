@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { permanentRedirect } from 'next/navigation';
 import { ArchiveHeader } from '@/components/archive/ArchiveHeader';
 import { pageOf } from '@/components/archive/ArchiveToolbar';
 import { CategoryFilter } from '@/components/archive/CategoryFilter';
@@ -22,9 +23,17 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 const DESCRIPTION = 'ابحث في عناوين المقالات وأسماء الكتّاب والأقسام والوسوم ونصوص المقالات. لا فرق بين الهمزات أو التشكيل في البحث.';
 
+/**
+ * Reads the view from the URL. Old WordPress search links (/?s=…) arrive here
+ * still carrying `s` (next.config.ts keeps unmatched query keys), so any `s`
+ * is folded into `q` with one redirect to the clean URL. Called first by both
+ * generateMetadata and the page, so the redirect happens as early as possible.
+ */
 async function readView(searchParams: Props['searchParams']) {
   const sp = await searchParams;
-  return { q: parseString(sp.q).slice(0, 100), category: parseString(sp.category), page: parsePage(sp.page) };
+  const view = { q: (parseString(sp.q) || parseString(sp.s)).slice(0, 100), category: parseString(sp.category), page: parsePage(sp.page) };
+  if (sp.s !== undefined) permanentRedirect(routes.search({ q: view.q, category: view.category || undefined, page: view.page }));
+  return view;
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -124,7 +133,7 @@ function SearchResults({ q, category, page, result }: { q: string; category: str
   return (
     <section aria-labelledby="search-results-title">
       <h2 id="search-results-title" className="text-h2 font-bold text-ink [overflow-wrap:anywhere]">
-        {result.total ? resultsLabel(result.total) : 'لا نتائج'} لـ “<bdi>{q}</bdi>”{active ? ` في «${active.name}»` : ''}
+        {result.total ? resultsLabel(result.total) : 'لا نتائج'} لـ «<bdi>{q}</bdi>»{active ? ` في «${active.name}»` : ''}
       </h2>
       {position ? <p className="mt-1 text-sm text-muted">{position}</p> : null}
       {facetRow}

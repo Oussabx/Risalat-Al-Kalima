@@ -40,11 +40,16 @@ export function ArticleAside({
         </div>
 
         <div className="flex items-center gap-3">
-          <AuthorAvatar author={author} size={44} />
+          {/* No byline (and no placeholder avatar) when the CMS exposes no usable author. */}
+          {author.name ? <AuthorAvatar author={author} size={44} /> : null}
           <div className="min-w-0">
-            {author.slug ? (
-              <Link href={routes.author(author.slug)} className="block truncate text-sm font-semibold text-ink transition-colors hover:text-brand-700">
-                {author.name}
+            {!author.name ? null : author.slug ? (
+              // The pseudo-element widens the touch target to 44px; the inner span truncates so it is not clipped.
+              <Link
+                href={routes.author(author.slug)}
+                className="relative block text-sm font-semibold text-ink transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 hover:text-brand-700"
+              >
+                <span className="block truncate">{author.name}</span>
               </Link>
             ) : (
               <span className="block truncate text-sm font-semibold text-ink">{author.name}</span>

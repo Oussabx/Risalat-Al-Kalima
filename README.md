@@ -43,7 +43,7 @@ src/
     arabic.ts          Arabic normalisation, dates («8 أيلول 2026»), reading time, plurals
     search*.ts         Arabic-aware ranking over a cached index of recent articles
     routes.ts          URL builders (trailing slashes, WordPress permalinks)
-    rate-limit.ts      Best-effort in-memory limiter for the form endpoints
+    rate-limit.ts      Best-effort in-memory limiter for the form and search endpoints
 ```
 
 - Pages are static/ISR and refresh every 10 minutes, or immediately through `/api/revalidate`.
@@ -69,9 +69,19 @@ src/
 | `POST /api/contact` | Contact form → Contact Form 7 or webhook (rate limit 3/min) |
 | `POST /api/newsletter` | Newsletter → Mailchimp, Brevo or MailPoet/webhook (rate limit 5/min) |
 | `POST /api/revalidate` | On-demand refresh (secret in header) |
-| `GET /api/search` | Search suggestions for the header overlay |
+| `GET /api/search` | Search suggestions for the header overlay (rate limit 30/min) |
 
-Redirects (`next.config.ts`): `/page/N/` and `/<archive>/<slug>/page/N/` → `?page=N`; `/?s=…` → `/search/?q=…`.
+Redirects (`next.config.ts`, all permanent) keep old WordPress URLs working:
+
+- `/page/N/` → `/articles/?page=N`; `/category|tag|author/<slug>/page/N/` and `/articles/page/N/` → `?page=N`.
+- Nested category permalinks `/category/<parent>/<child>/` (and their `/page/N/` form) → `/category/<child>/`.
+- Per-archive feeds `/category/…/feed/`, `/tag/<slug>/feed/`, `/author/<slug>/feed/` and `/comments/feed/` → `/feed/`.
+- Old sitemap names `/sitemap_index.xml`, `/wp-sitemap.xml`, `/post-sitemap.xml`, `/page-sitemap.xml` → `/sitemap.xml`.
+- `/?s=…` → `/search/?q=…` (the search page drops the leftover `s` parameter with one more redirect).
+
+Rate limits are per client and per server instance (in memory, see `src/lib/rate-limit.ts`). The client is identified
+by its IP address: `x-real-ip` is trusted only when `TRUST_PROXY=1` or on Vercel; otherwise the last `x-forwarded-for`
+hop is used (clients without one share a single bucket).
 
 ## Design system
 
@@ -123,7 +133,7 @@ All variables are documented in [`.env.example`](.env.example).
 | --- | --- |
 | `WP_API_URL` | WordPress REST root, e.g. `https://cms.risalatalkalima.com/wp-json` |
 | `WP_REVALIDATE_SECONDS` | Cache lifetime of WordPress responses (default 600) |
-| `SEARCH_INDEX_PAGES` | Pages of 100 recent articles in the search index (default 6) |
+| `SEARCH_INDEX_PAGES` | Pages of recent articles in the search index, 100 per page (default 6 → the latest 600 articles; raise it if the archive is larger). Older articles are still found through WordPress full-text search |
 | `CONTENT_SOURCE` | `fixtures` for preview data (always `noindex`); empty in production |
 | `NEXT_PUBLIC_SITE_URL` | Public origin for canonical URLs, sitemap, RSS |
 | `NEXT_PUBLIC_LOGO_URL` | Optional URL of the original logo file (else WordPress Site Identity) |
@@ -133,6 +143,7 @@ All variables are documented in [`.env.example`](.env.example).
 | `REVALIDATE_SECRET` | Secret for `/api/revalidate` |
 | `CONTACT_PROVIDER`, `CF7_FORM_ID`, `CONTACT_WEBHOOK_URL` | Contact form delivery |
 | `NEWSLETTER_PROVIDER`, `MAILCHIMP_API_KEY`, `MAILCHIMP_LIST_ID`, `BREVO_API_KEY`, `BREVO_LIST_ID`, `NEWSLETTER_WEBHOOK_URL` | Newsletter delivery |
+| `TRUST_PROXY` | `1` when a reverse proxy in front of the app overwrites `x-real-ip` / `x-forwarded-for` (nginx, Cloudflare…); not needed on Vercel. Used to key the rate limits |
 | `PW_CHROMIUM_PATH` | Chromium binary for Playwright (tests only) |
 
 Forms never pretend: when a provider is not configured the API answers `503` and the form says the message was **not**
@@ -148,9 +159,12 @@ sent; provider failures answer `502`; success is shown only after a `2xx`.
    (or `Authorization: Bearer <secret>`). The secret is never accepted in the query string. Without the webhook,
    content still refreshes within `WP_REVALIDATE_SECONDS`.
 3. **Legacy URLs are preserved**: article, category, tag and author permalinks are identical; `/feed/` still works;
-   `/?s=term` redirects to `/search/?q=term`; `/page/N/` style pagination redirects to `?page=N`.
-4. Optionally block the WordPress front end on the CMS subdomain (or set it `noindex`) to avoid duplicate content.
-5. Submit `https://risalatalkalima.com/sitemap.xml` in Google Search Console.
+   `/?s=term` redirects to `/search/?q=term`; `/page/N/` style pagination, nested category links, per-archive feeds
+   and the old sitemap file names redirect too (see [Pages and routes](#pages-and-routes)).
+4. Behind your own reverse proxy (not Vercel), make it set `x-real-ip` / `x-forwarded-for` and set `TRUST_PROXY=1`,
+   so the rate limits count each visitor separately.
+5. Optionally block the WordPress front end on the CMS subdomain (or set it `noindex`) to avoid duplicate content.
+6. Submit `https://risalatalkalima.com/sitemap.xml` in Google Search Console.
 
 ## What to confirm before launch
 
@@ -167,6 +181,19 @@ sent; provider failures answer `502`; success is shown only after a `2xx`.
 - [ ] **Sticky posts**: mark articles as sticky in WordPress to feed the home hero and «مختارات المحرّر».
 - [ ] **Publisher name**: confirm the official form — «كنيسة لبنان الكتابيّة الإنجيليّة» or
       «كنيسة لبنان الإنجيليّة» — before it is used anywhere.
+- [ ] **About facts**: confirm the wording and figures of `aboutFacts` in `src/lib/site.ts` (licence, editor-in-chief,
+      about forty volunteers, about 70٪ local writers / 30٪ translations, statement of faith) and whether the original
+      من نحن text writes the figures with Western (70) or Eastern Arabic (٧٠) digits.
+- [ ] **Category names**: every name in `allCategoryNames` / `categoryGroups` (`src/lib/site.ts`) must match a
+      WordPress category (matching ignores diacritics and hamza forms). A name without a match silently disappears
+      from the menu: compare the drawer / mega menu and the `/articles/` chips with the original menu.
+- [ ] **Permalinks**: confirm WordPress uses `/%postname%/` and the default `category` / `tag` / `author` bases
+      (Settings → Permalinks). Other bases need matching routes or redirects here.
+- [ ] **Authors**: confirm `/wp-json/wp/v2/users` is reachable (some security plugins hide it), or at least that post
+      embeds (`?_embed=author`) include the author's name; otherwise bylines and `/author/<slug>/` pages stay empty.
+- [ ] **Homepage copy**: approve the section titles and descriptions (`homeSections` in `src/lib/site.ts`) and the CTA
+      banner text («كلمة تحيي القلب», «اكتشف المزيد»…).
+- [ ] **Proxy**: if the app runs behind your own reverse proxy, set `TRUST_PROXY=1` (see Deployment).
 - [ ] `REVALIDATE_SECRET` set and the WordPress webhook tested.
 
 ## Preview data

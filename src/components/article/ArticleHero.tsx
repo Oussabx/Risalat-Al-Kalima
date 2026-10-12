@@ -18,14 +18,14 @@ export function ArticleHero({ article }: { article: Article }) {
     return (
       <header className="rounded-(--radius-card) border border-brand-100 bg-gradient-to-bl from-brand-50 to-brand-100 px-5 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
         {category ? <CategoryBadge category={category} className="mb-4" /> : null}
-        <h1 className="max-w-4xl text-h1 font-bold text-ink sm:text-[2.5rem] sm:leading-[1.4]">{article.title}</h1>
+        <h1 className="max-w-4xl text-h1 font-bold text-ink lg:text-[2.25rem] lg:leading-[1.45]">{article.title}</h1>
         <PostMeta article={article} avatar avatarSize={36} className="mt-5" />
       </header>
     );
   }
 
   return (
-    <header className="relative isolate flex aspect-[4/3] flex-col justify-end overflow-clip rounded-(--radius-card) bg-ink shadow-(--shadow-card) sm:aspect-[16/9] lg:aspect-[21/9] print:aspect-auto print:bg-transparent print:shadow-none">
+    <header className="relative isolate flex aspect-[4/3] flex-col justify-end overflow-clip rounded-(--radius-card) bg-ink shadow-(--shadow-card) sm:aspect-[2/1] lg:aspect-[16/6] print:aspect-auto print:bg-transparent print:shadow-none">
       <div className="absolute inset-0 -z-10 print:hidden">
         <PostImage
           image={article.image}
@@ -35,9 +35,9 @@ export function ArticleHero({ article }: { article: Article }) {
         />
       </div>
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/35 to-black/0 print:hidden" />
-      <div className="p-5 pt-16 sm:p-8 sm:pt-20 lg:p-10 print:p-0">
+      <div className="p-5 pt-16 sm:p-8 sm:pt-16 lg:px-10 lg:pb-8 print:p-0">
         {category ? <CategoryBadge category={category} className="mb-3 sm:mb-4" /> : null}
-        <h1 className="max-w-4xl text-h1 font-bold text-white [text-shadow:0_1px_12px_rgb(0_0_0/0.25)] sm:text-[2.5rem] sm:leading-[1.4] print:text-black">
+        <h1 className="max-w-4xl text-h1 font-bold text-white [text-shadow:0_1px_12px_rgb(0_0_0/0.25)] lg:text-[2.25rem] lg:leading-[1.45] print:text-black">
           {article.title}
         </h1>
         <PostMeta article={article} tone="light" avatar avatarSize={36} className="mt-4 print:text-black" />

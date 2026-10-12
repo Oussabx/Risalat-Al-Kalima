@@ -91,7 +91,7 @@ export function HeaderBar({ logo, drawerLogo, navigation, social }: { logo: Reac
     return () => document.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  // Mega menu: Escape, outside pointer and focus leaving the header close it.
+  // Mega menu: Escape, outside pointer and focus leaving both the panel and its triggers close it.
   useEffect(() => {
     if (panel !== 'mega') return;
     const header = headerRef.current;
@@ -107,7 +107,9 @@ export function HeaderBar({ logo, drawerLogo, navigation, social }: { logo: Reac
       setPanel('none');
     };
     const onFocusIn = (event: FocusEvent) => {
-      if (header && !header.contains(event.target as Node)) setPanel('none');
+      const target = event.target as Element | null;
+      if (target instanceof Element && (megaRef.current?.contains(target) || target.closest('[data-mega-trigger]'))) return;
+      setPanel('none');
     };
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('pointerdown', onPointerDown);

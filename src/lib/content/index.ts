@@ -14,6 +14,14 @@ export const content: ContentSource = process.env.CONTENT_SOURCE === 'fixtures' 
 /** True when the site shows preview data (pages are then marked noindex and a banner is shown). */
 export const isPreview = content.kind === 'fixtures';
 
+/**
+ * Whether a failed CMS request may fall back to an empty block that then gets cached.
+ * At runtime in production it may not: throwing during an ISR refresh keeps the last
+ * good page. Preview data, development and the build (whose pages are refreshed after
+ * `revalidate` anyway) degrade gracefully instead of failing.
+ */
+export const tolerateOutage = isPreview || process.env.NODE_ENV !== 'production' || process.env.NEXT_PHASE === 'phase-production-build';
+
 export const getIdentity = cache(() => content.getIdentity());
 export const getCategories = cache(() => content.getCategories());
 export const getArticle = cache((slug: string) => content.getArticle(slug));
@@ -60,6 +68,7 @@ export const getNavigation = cache(async (): Promise<Navigation> => {
     return { primary, groups: groups.filter((g) => g.categories.length) };
   } catch (error) {
     console.error('[content] navigation', (error as Error).message);
+    if (!tolerateOutage) throw error;
     return { primary: [], groups: [] };
   }
 });

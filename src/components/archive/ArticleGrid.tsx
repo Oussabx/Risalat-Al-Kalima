@@ -73,7 +73,7 @@ export function FeaturedArticleCard({ article, label, headingLevel = 2 }: { arti
           zoom
         />
         {category ? (
-          <div className="absolute start-3 bottom-3 z-10">
+          <div className="absolute end-3 bottom-3 z-10">
             <CategoryBadge category={category} />
           </div>
         ) : null}
@@ -108,7 +108,7 @@ function SideCard({ article, headingLevel }: { article: ArticleSummary; headingL
           zoom
         />
         {category ? (
-          <div className="absolute start-3 bottom-3 z-10 lg:hidden">
+          <div className="absolute end-3 bottom-3 z-10 lg:hidden">
             <CategoryBadge category={category} />
           </div>
         ) : null}

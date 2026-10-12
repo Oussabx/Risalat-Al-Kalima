@@ -22,7 +22,7 @@ export function RelatedArticles({ articles, viewAllHref, className = '' }: { art
       >
         {articles.map((article) => (
           <li key={article.id} className={row ? 'w-[82%] max-w-[22rem] shrink-0 snap-start sm:w-auto sm:max-w-none' : ''}>
-            <ArticleCard article={article} sizes="(min-width: 1240px) 280px, (min-width: 1024px) 23vw, (min-width: 640px) 45vw, 82vw" />
+            <ArticleCard article={article} ratio="aspect-[2/1]" sizes="(min-width: 1240px) 280px, (min-width: 1024px) 23vw, (min-width: 640px) 45vw, 82vw" />
           </li>
         ))}
       </ul>

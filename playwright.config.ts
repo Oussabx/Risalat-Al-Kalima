@@ -44,7 +44,8 @@ export default defineConfig({
   webServer: {
     command: `npm run build:preview && npx next start -p ${PORT} -H 127.0.0.1`,
     url: baseURL,
-    env: { CONTENT_SOURCE: 'fixtures' },
+    // TRUST_PROXY lets each test use its own x-real-ip, so rate limits never couple tests together.
+    env: { CONTENT_SOURCE: 'fixtures', TRUST_PROXY: '1' },
     reuseExistingServer: true,
     timeout: 240_000,
   },

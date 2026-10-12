@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { toSearchHit, type SearchResponse } from '@/components/search/hits';
+import { clientKey, rateLimit } from '@/lib/rate-limit';
 import { runSearch } from '@/lib/search-service';
 
 const DEFAULT_LIMIT = 6;
 const MAX_LIMIT = 20;
+/** Searches per client per minute: generous for typing in the overlay, but each new query reaches WordPress. */
+const RATE_LIMIT = 30;
 const CACHE_HEADERS = { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' };
 
 /**
@@ -17,6 +20,14 @@ export async function GET(request: NextRequest) {
   const limit = Number.isFinite(requested) && requested > 0 ? Math.min(requested, MAX_LIMIT) : DEFAULT_LIMIT;
 
   if (!q) return NextResponse.json<SearchResponse>({ total: 0, items: [] }, { headers: CACHE_HEADERS });
+
+  const allowed = rateLimit(`search:${clientKey(request)}`, RATE_LIMIT);
+  if (!allowed.ok) {
+    return NextResponse.json(
+      { message: 'أجريت عمليّات بحث كثيرة خلال وقت قصير. يرجى الانتظار قليلًا ثمّ المحاولة مجدّدًا.' },
+      { status: 429, headers: { 'Cache-Control': 'no-store', 'Retry-After': String(allowed.retryAfter) } },
+    );
+  }
 
   try {
     const result = await runSearch(q, { perPage: limit });

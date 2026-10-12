@@ -20,7 +20,7 @@ export function SearchResultCard({ article, query, priority = false }: { article
       />
       <div className="min-w-0 flex-1">
         {category ? (
-          <Link href={routes.category(category.slug)} className="eyebrow relative z-10 mb-1 inline-block hover:text-brand-800 hover:underline">
+          <Link href={routes.category(category.slug)} className="eyebrow relative z-10 mb-1 inline-block after:absolute after:-inset-x-1 after:-inset-y-3 after:content-[''] hover:text-brand-800 hover:underline">
             {category.name}
           </Link>
         ) : null}

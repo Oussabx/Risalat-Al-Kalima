@@ -29,7 +29,7 @@ export function SectionHeader({
         {description ? <p className="mt-1.5 ms-[1.125rem] text-sm leading-relaxed text-muted sm:text-base">{description}</p> : null}
       </div>
       {href ? (
-        <Link href={href} className="group inline-flex shrink-0 items-center gap-1.5 rounded-full py-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
+        <Link href={href} className="group inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full text-sm font-semibold text-brand-700 hover:text-brand-800">
           {linkLabel}
           <ArrowLeftIcon width={16} height={16} className="transition-transform duration-200 group-hover:-translate-x-1" />
           {description || title ? <span className="sr-only">: {title}</span> : null}

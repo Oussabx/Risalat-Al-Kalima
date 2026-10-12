@@ -138,6 +138,26 @@ describe('prepareContent — headings', () => {
     expect(headings).toEqual([{ id: 'section-1', text: 'عنوان كبير', level: 2 }]);
   });
 
+  it('never gives a heading an id the page itself uses', () => {
+    const { headings, html: out } = prepareContent('<h2 id="main">أ</h2><h3 id="article-body">ب</h3><h2 id="toc-title">ج</h2><h2 id="site-mega-menu-g0">د</h2>');
+    expect(headings.map((h) => h.id)).toEqual(['section-1', 'section-2', 'section-3', 'section-4']);
+    expect(out).not.toMatch(/id="(main|article-body|toc-title|site-mega-menu-g0)"/);
+  });
+
+  it('keeps unique h4 ids out of the outline and drops clashing ones', () => {
+    const { headings, html: out } = prepareContent('<h4 id="note">ملاحظة</h4><h2 id="note">أ</h2><h4 id="note">ب</h4><h4 id="main">ج</h4><h4>د</h4>');
+    expect(headings).toEqual([{ id: 'section-1', text: 'أ', level: 2 }]);
+    expect(out.match(/id="note"/g)).toHaveLength(1);
+    expect(out).toContain('<h4 id="note">ملاحظة</h4>');
+    expect(out).toContain('<h4>ب</h4>');
+    expect(out).toContain('<h4>ج</h4>');
+    expect(out).toContain('<h4>د</h4>');
+  });
+
+  it('strips a reserved or duplicate id from an empty heading', () => {
+    expect(html('<h2 id="main"> </h2>')).toBe('<h2> </h2>');
+  });
+
   it('decodes entities in heading text and skips empty headings', () => {
     const { headings } = prepareContent('<h2>أ &amp; ب</h2><h2> </h2><h4>ليس في الفهرس</h4>');
     expect(headings).toEqual([{ id: 'section-1', text: 'أ & ب', level: 2 }]);
@@ -192,5 +212,14 @@ describe('prepareContent — structure, links and media', () => {
 
   it('strips disallowed attributes like style', () => {
     expect(html('<p style="color:red" class="lead" dir="rtl">نص</p>')).toBe('<p class="lead" dir="rtl">نص</p>');
+  });
+
+  it('keeps only text-align from inline styles, on block elements', () => {
+    expect(html('<p style="text-align:center">نص</p>')).toBe('<p style="text-align:center">نص</p>');
+    expect(html('<h3 style="color:red;text-align: left">عنوان</h3>')).toBe('<h3 style="text-align:left" id="section-1">عنوان</h3>');
+    expect(html('<td style="text-align:right">١</td>')).toContain('style="text-align:right"');
+    expect(html('<p style="text-align:url(javascript:alert(1))">نص</p>')).toBe('<p>نص</p>');
+    expect(html('<span style="text-align:center">نص</span>')).toBe('<span>نص</span>');
+    expect(html('<p class="has-text-align-center">نص</p>')).toBe('<p class="has-text-align-center">نص</p>');
   });
 });

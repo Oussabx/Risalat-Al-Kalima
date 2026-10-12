@@ -11,7 +11,7 @@ export function SearchNoResults({ query }: { query: string }) {
       <span className="mb-5 inline-flex size-14 items-center justify-center rounded-full bg-brand-100 text-brand-600">
         <SearchIcon width={26} height={26} />
       </span>
-      <h2 className="text-h3 font-bold text-ink [overflow-wrap:anywhere]">لا توجد نتائج لـ “<bdi>{query}</bdi>”</h2>
+      <h2 className="text-h3 font-bold text-ink [overflow-wrap:anywhere]">لا توجد نتائج لـ«<bdi>{query}</bdi>»</h2>
       <p className="mt-2 text-base text-muted">بعض الاقتراحات:</p>
       <ul role="list" className="mt-4 space-y-2 text-start text-[0.9375rem] text-ink-soft">
         {TIPS.map((tip) => (

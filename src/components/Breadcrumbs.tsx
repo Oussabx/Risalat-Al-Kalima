@@ -19,7 +19,7 @@ export function Breadcrumbs({ items, tone = 'default', className = '' }: { items
           return (
             <li key={`${crumb.label}-${i}`} className="flex min-w-0 items-center gap-1.5">
               {crumb.href && !last ? (
-                <Link href={crumb.href} className={`transition-colors ${linkCls}`}>
+                <Link href={crumb.href} className={`relative transition-colors after:absolute after:-inset-x-1 after:-inset-y-3 after:content-[''] ${linkCls}`}>
                   {crumb.label}
                 </Link>
               ) : (

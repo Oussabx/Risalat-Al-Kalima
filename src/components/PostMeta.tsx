@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { formatDate, isoDate, minutesLabel } from '@/lib/arabic';
 import type { ArticleSummary } from '@/lib/content/types';
 import { routes } from '@/lib/routes';
@@ -24,28 +25,38 @@ export function PostMeta({
 }) {
   const muted = tone === 'light' ? 'text-white/85' : 'text-muted';
   const strong = tone === 'light' ? 'text-white' : 'text-ink-soft';
-  const sep = <span aria-hidden="true" className={tone === 'light' ? 'text-white/50' : 'text-line-strong'}>|</span>;
-  const authorName =
-    linkAuthor && article.author.slug ? (
-      <Link href={routes.author(article.author.slug)} className={`relative z-10 font-medium ${strong} transition-colors hover:text-brand-600 ${tone === 'light' ? 'hover:text-white hover:underline' : ''}`}>
-        {article.author.name}
-      </Link>
-    ) : (
-      <span className={`font-medium ${strong}`}>{article.author.name}</span>
-    );
+  const { author } = article;
+  const sepClass = tone === 'light' ? 'text-white/50' : 'text-line-strong';
+  /** Each «|» stays on the same line as the item it introduces, so a wrap never leaves it dangling. */
+  const withSep = (node: ReactNode) => (
+    <span className="inline-flex items-center gap-x-2.5 whitespace-nowrap">
+      <span aria-hidden="true" className={sepClass}>
+        |
+      </span>
+      {node}
+    </span>
+  );
+  // An article without a usable author record shows no byline (never a substitute name).
+  const authorName = !author.name ? null : linkAuthor && author.slug ? (
+    // The pseudo-element widens the touch target to 44px without moving the text.
+    <Link
+      href={routes.author(author.slug)}
+      className={`relative z-10 font-medium after:absolute after:-inset-x-1 after:-inset-y-3 ${strong} transition-colors hover:text-brand-600 ${tone === 'light' ? 'hover:text-white hover:underline' : ''}`}
+    >
+      {author.name}
+    </Link>
+  ) : (
+    <span className={`font-medium ${strong}`}>{author.name}</span>
+  );
+  const date = <time dateTime={isoDate(article.date)}>{formatDate(article.date)}</time>;
+  const reading = readingTime && article.readingMinutes > 0 ? <span>{minutesLabel(article.readingMinutes)} قراءة</span> : null;
 
   return (
     <div className={`flex flex-wrap items-center gap-x-2.5 gap-y-1 text-meta ${muted} ${className}`}>
-      {avatar ? <AuthorAvatar author={article.author} size={avatarSize} /> : null}
+      {avatar && authorName ? <AuthorAvatar author={author} size={avatarSize} /> : null}
       {authorName}
-      {sep}
-      <time dateTime={isoDate(article.date)}>{formatDate(article.date)}</time>
-      {readingTime && article.readingMinutes > 0 ? (
-        <>
-          {sep}
-          <span>{minutesLabel(article.readingMinutes)} قراءة</span>
-        </>
-      ) : null}
+      {authorName ? withSep(date) : date}
+      {reading ? withSep(reading) : null}
     </div>
   );
 }

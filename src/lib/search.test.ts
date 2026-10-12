@@ -14,6 +14,8 @@ function makeArticle(over: { title?: string; author?: string; categories?: strin
     excerpt: over.excerpt ?? 'مقتطف محايد',
     date: over.date ?? '2026-01-01T09:00:00',
     modified: over.date ?? '2026-01-01T09:00:00',
+    published: `${over.date ?? '2026-01-01T09:00:00'}Z`,
+    updated: `${over.date ?? '2026-01-01T09:00:00'}Z`,
     author: { id: 1, name: over.author ?? 'كاتب مجهول', slug: 'writer', bio: '' },
     categories: (over.categories ?? []).map((name, i) => ({ id: i + 1, name, slug: name, description: '', count: 1, parent: 0 })),
     tags: (over.tags ?? []).map((name, i) => ({ id: 100 + i, name, slug: name, description: '', count: 1 })),

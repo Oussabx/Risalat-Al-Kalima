@@ -7,6 +7,8 @@ import { ArrowLeftIcon } from '../icons';
 
 /** "بقلم" box after the article: the author, their bio when WordPress has one, and more of their articles. */
 export function AuthorBox({ author, more }: { author: Author; more: ArticleSummary[] }) {
+  // Without a usable author record there is nobody to credit; omit the box rather than invent a byline.
+  if (!author.name) return null;
   const archive = author.slug ? routes.author(author.slug) : null;
   return (
     <section aria-labelledby="author-box-title" className="card p-5 sm:p-7">

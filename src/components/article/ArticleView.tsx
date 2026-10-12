@@ -44,13 +44,15 @@ function articleJsonLd({ article, identity }: ArticleViewData, url: string) {
     headline: article.title.length > 110 ? `${article.title.slice(0, 109)}…` : article.title,
     description: article.excerpt || undefined,
     image: article.image ? [absoluteMedia(article.image.src)] : undefined,
-    datePublished: article.date,
-    dateModified: article.modified || article.date,
-    author: {
-      '@type': 'Person',
-      name: author.name,
-      url: author.slug ? absoluteUrl(routes.author(author.slug), site.url) : undefined,
-    },
+    datePublished: article.published,
+    dateModified: article.updated || article.published,
+    author: author.name
+      ? {
+          '@type': 'Person',
+          name: author.name,
+          url: author.slug ? absoluteUrl(routes.author(author.slug), site.url) : undefined,
+        }
+      : undefined,
     publisher: {
       '@type': 'Organization',
       name: site.fullName,

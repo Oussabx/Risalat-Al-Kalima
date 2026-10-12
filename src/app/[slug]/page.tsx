@@ -29,8 +29,8 @@ async function resolve(params: Props['params']) {
   const article = await getArticle(slug);
   if (article) return { article, page: null };
   // The WordPress About/Contact pages live at /about/ and /contact/ here; never serve them twice.
-  if (slug === site.aboutPageSlug) permanentRedirect(routes.about());
-  if (slug === site.contactPageSlug) permanentRedirect(routes.contact());
+  if (slug === decodeSlug(site.aboutPageSlug)) permanentRedirect(routes.about());
+  if (slug === decodeSlug(site.contactPageSlug)) permanentRedirect(routes.contact());
   const page = await getPage(slug);
   return { article: null, page };
 }
@@ -41,6 +41,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (article) {
     const url = routes.article(article.slug);
     const description = article.excerpt || site.shortDescription;
+    const { author } = article;
+    const authorRef = author.slug ? absoluteUrl(routes.author(author.slug), site.url) : author.name || null;
     const images = article.image ? [{ url: article.image.src, width: article.image.width, height: article.image.height, alt: article.image.alt }] : undefined;
     return {
       title: article.title,
@@ -54,9 +56,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: article.title,
         description,
         images,
-        publishedTime: article.date,
-        modifiedTime: article.modified || article.date,
-        authors: [article.author.slug ? absoluteUrl(routes.author(article.author.slug), site.url) : article.author.name],
+        publishedTime: article.published,
+        modifiedTime: article.updated,
+        authors: authorRef ? [authorRef] : undefined,
         section: article.categories[0]?.name,
         tags: article.tags.map((t) => t.name),
       },

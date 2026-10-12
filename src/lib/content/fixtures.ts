@@ -64,6 +64,9 @@ const articles: Article[] = fixtureArticles
       excerpt: truncate(stripHtml(contentHtml).replace(`${PREVIEW_NOTE}. `, ''), 180),
       date: f.date,
       modified: f.date,
+      // Preview dates carry no zone; treat them as UTC.
+      published: `${f.date}Z`,
+      updated: `${f.date}Z`,
       author: authors.find((a) => a.name === f.author) ?? authors[0],
       categories: f.categories.map((name) => categories.find((c) => c.name === name)).filter((c): c is Category => Boolean(c)),
       tags: (f.tags ?? []).map((name) => tags.find((t) => t.name === name)).filter((t): t is Tag => Boolean(t)),
@@ -149,7 +152,7 @@ export const fixturesSource: ContentSource = {
   },
 
   async getSitemapEntries() {
-    return { articles: articles.map((a) => ({ slug: a.slug, modified: a.modified })), pages: [] };
+    return { articles: articles.map((a) => ({ slug: a.slug, modified: a.updated })), pages: [] };
   },
 };
 

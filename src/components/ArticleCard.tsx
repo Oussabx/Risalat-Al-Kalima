@@ -24,6 +24,7 @@ export function ArticleCard({
   headingLevel = 3,
   sizes,
   index,
+  ratio = 'aspect-[16/10]',
   className = '',
 }: {
   article: ArticleSummary;
@@ -34,6 +35,8 @@ export function ArticleCard({
   sizes?: string;
   /** Shows a rank number in the compact variant. */
   index?: number;
+  /** Image frame of the standard variant (a Tailwind aspect class). */
+  ratio?: string;
   className?: string;
 }) {
   const H = `h${headingLevel}` as 'h2' | 'h3' | 'h4';
@@ -100,9 +103,9 @@ export function ArticleCard({
       className={`group relative flex h-full flex-col overflow-hidden rounded-(--radius-card) border border-line bg-surface shadow-(--shadow-card) transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-(--shadow-lift) has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-brand-500 ${className}`}
     >
       <div className="relative">
-        <PostImage image={article.image} sizes={sizes ?? '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw'} priority={priority} zoom />
+        <PostImage image={article.image} sizes={sizes ?? '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw'} priority={priority} ratio={ratio} zoom />
         {category ? (
-          <div className="absolute bottom-3 left-3 z-10">
+          <div className="absolute end-3 bottom-3 z-10">
             <CategoryBadge category={category} />
           </div>
         ) : null}

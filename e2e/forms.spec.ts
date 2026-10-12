@@ -18,7 +18,8 @@ function newsletterIn(scope: Locator) {
 test.describe('F — newsletter', () => {
   test.beforeEach(async ({ page }) => isolateRateLimit(page));
 
-  for (const where of ['main', 'footer'] as const) {
+  // The homepage has a single newsletter form, in the site footer.
+  for (const where of ['footer'] as const) {
     test(`${where} form: invalid email is rejected client-side, valid email shows the honest server answer`, async ({ page }) => {
       await gotoAndSettle(page, '/');
       const nl = newsletterIn(page.locator(where).first());
@@ -53,7 +54,7 @@ test.describe('F — newsletter', () => {
 
   test('a non-2xx response is never presented as success, a 2xx response is', async ({ page }) => {
     await gotoAndSettle(page, '/');
-    const nl = newsletterIn(page.locator('main'));
+    const nl = newsletterIn(page.locator('footer'));
     await nl.form.scrollIntoViewIfNeeded();
 
     // Server error with a misleading body: still an error.

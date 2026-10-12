@@ -61,7 +61,8 @@ function GridLayout({ section }: { section: HomeCategorySection }) {
 function ListLayout({ section }: { section: HomeCategorySection }) {
   return (
     <div className="card px-5 py-1 sm:px-8 sm:py-2">
-      <ul className="grid gap-x-12 md:grid-cols-2">
+      {/* An odd last item spans both columns, so no half row is left empty. */}
+      <ul className="grid gap-x-12 md:grid-cols-2 md:[&>li:last-child:nth-child(odd)]:col-span-2">
         {section.items.map((article) => (
           <li key={article.id} className={RULED_ITEM}>
             <ArticleCard article={article} variant="compact" />

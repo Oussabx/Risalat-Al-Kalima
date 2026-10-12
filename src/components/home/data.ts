@@ -1,5 +1,5 @@
 import 'server-only';
-import { getEditorsPicks, getFeatured, getIdentity, getSectionArticles, listArticles } from '@/lib/content';
+import { getEditorsPicks, getFeatured, getIdentity, getSectionArticles, listArticles, tolerateOutage } from '@/lib/content';
 import type { ArticleSummary, Category, SiteIdentity } from '@/lib/content/types';
 import { homeSections, mediaCategoryNames, site } from '@/lib/site';
 
@@ -64,24 +64,33 @@ function take(pool: ArticleSummary[] | undefined, limit: number, shown: Set<numb
   return out;
 }
 
-/** Everything the homepage renders. No article appears in two blocks. */
+/**
+ * Everything the homepage renders. No article appears in two blocks. When the main
+ * article list fails at runtime this throws, so Next keeps serving the last good page.
+ */
 export async function loadHomepage(): Promise<HomeData> {
   const shown = new Set<number>();
 
-  const [identity, featured, recent] = await Promise.all([
+  const [identity, featured, recent, pickPool] = await Promise.all([
     attempt('identity', getIdentity),
     attempt('featured', getFeatured),
-    attempt('latest', async () => (await listArticles({ perPage: 1 + LIMITS.rail + LIMITS.latest })).items),
+    // Enough for the rail and «جديد المجلّة» even when the lead and every pick are among the newest.
+    attempt('latest', async () => (await listArticles({ perPage: 1 + LIMITS.picks + LIMITS.rail + LIMITS.latest })).items),
+    // One extra in case the lead is itself a sticky post.
+    attempt('editors picks', () => getEditorsPicks(LIMITS.picks + 1)),
   ]);
 
+  if (recent === null && !tolerateOutage) throw new Error('[home] the article list is unavailable');
+
+  // Lead first, then the editor's picks, so the curated block is never emptied by the newest-article blocks.
   const lead = featured ?? recent?.[0] ?? null;
   if (lead) shown.add(lead.id);
+  const picks = take(pickPool ?? undefined, LIMITS.picks, shown);
   const rail = take(recent ?? undefined, LIMITS.rail, shown);
   const latest = take(recent ?? undefined, LIMITS.latest, shown);
 
   const exclude = [...shown];
-  const [pickPool, sectionPools, videoPool] = await Promise.all([
-    attempt('editors picks', () => getEditorsPicks(LIMITS.picks, exclude)),
+  const [sectionPools, videoPool] = await Promise.all([
     Promise.all(
       homeSections.map((section) =>
         attempt(`section ${section.key}`, () => getSectionArticles(section.names, LIMITS.section[section.variant] + OVERFETCH, exclude)),
@@ -89,8 +98,6 @@ export async function loadHomepage(): Promise<HomeData> {
     ),
     attempt('video', () => getSectionArticles(mediaCategoryNames, LIMITS.video + OVERFETCH, exclude)),
   ]);
-
-  const picks = take(pickPool ?? undefined, LIMITS.picks, shown);
 
   const sections: HomeCategorySection[] = [];
   homeSections.forEach((section, i) => {

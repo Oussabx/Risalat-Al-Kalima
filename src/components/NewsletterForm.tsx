@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { AlertIcon, ArrowLeftIcon, CheckIcon } from './icons';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -15,6 +15,7 @@ export function NewsletterForm({ tone = 'default', className = '' }: { tone?: 'd
   const id = useId();
   const [state, setState] = useState<State>({ status: 'idle' });
   const [email, setEmail] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const invalid = state.status === 'error' && state.message === 'invalid';
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -23,6 +24,7 @@ export function NewsletterForm({ tone = 'default', className = '' }: { tone?: 'd
     const value = email.trim();
     if (!EMAIL.test(value)) {
       setState({ status: 'error', message: 'invalid' });
+      inputRef.current?.focus();
       return;
     }
     setState({ status: 'loading' });
@@ -54,6 +56,7 @@ export function NewsletterForm({ tone = 'default', className = '' }: { tone?: 'd
           البريد الإلكترونيّ
         </label>
         <input
+          ref={inputRef}
           id={`${id}-email`}
           type="email"
           name="email"
@@ -67,6 +70,7 @@ export function NewsletterForm({ tone = 'default', className = '' }: { tone?: 'd
             if (state.status === 'error') setState({ status: 'idle' });
           }}
           aria-invalid={invalid || undefined}
+          aria-describedby={invalid ? `${id}-status` : undefined}
           className={`field min-w-0 flex-1 text-start placeholder:text-end ${light ? 'border-white/30' : ''}`}
           required
         />

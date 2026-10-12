@@ -1,11 +1,11 @@
 import 'server-only';
 
 /**
- * Best-effort, in-memory sliding-window rate limiter for the form endpoints.
+ * Best-effort, in-memory sliding-window rate limiter for the form and search endpoints.
  *
  * Counters live in this server instance only: they reset on restart and are
  * not shared between instances or serverless invocations. That is enough to
- * slow down casual abuse of the contact and newsletter forms; it is not a
+ * slow down casual abuse of the forms and the search API; it is not a
  * security boundary. Memory is bounded: at most MAX_KEYS clients are tracked
  * (least recently seen evicted first) and each keeps at most `limit` stamps.
  */
@@ -55,12 +55,22 @@ function remember(key: string, stamps: number[]) {
 }
 
 /**
- * Identifies the client: `x-real-ip`, else the LAST `x-forwarded-for` entry —
- * the one appended by the closest proxy (earlier entries are whatever the
- * client chose to send) — else a shared 'anon' bucket.
+ * True when the deployment sits behind a proxy that overwrites the forwarding
+ * headers (TRUST_PROXY=1, or Vercel, whose edge sets x-real-ip itself).
+ */
+function trustsProxy(): boolean {
+  return process.env.TRUST_PROXY === '1' || Boolean(process.env.VERCEL);
+}
+
+/**
+ * Identifies the client. Behind a trusted proxy: `x-real-ip`, else the LAST
+ * `x-forwarded-for` entry (the one appended by the closest proxy; earlier
+ * entries are whatever the client chose to send). Otherwise `x-real-ip` may be
+ * client-supplied, so only the last `x-forwarded-for` hop is used. Without
+ * either, every client shares an 'anon' bucket.
  */
 export function clientKey(request: Request): string {
-  const realIp = request.headers.get('x-real-ip')?.trim();
+  const realIp = trustsProxy() ? request.headers.get('x-real-ip')?.trim() : undefined;
   if (realIp) return realIp.slice(0, MAX_KEY_LENGTH);
   const forwarded = request.headers
     .get('x-forwarded-for')

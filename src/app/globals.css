@@ -89,8 +89,20 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    scroll-padding-top: 6.5rem;
     scrollbar-gutter: stable;
+    /*
+     * Room above anything scrolled into view (hash links, the TOC, focus) so the sticky header never
+     * covers it. Applied as scroll-margin on the targets rather than as scroll-padding here: the two add
+     * up, and the TOC scrolls by the heading's scroll-margin alone, so this keeps every jump at one offset.
+     */
+    --anchor-offset: 5rem;
+    scroll-padding-top: 0;
+    @variant lg {
+      --anchor-offset: 6.5rem;
+    }
+  }
+  :where(#main, a[href], button, input, select, textarea, summary, [tabindex]) {
+    scroll-margin-top: var(--anchor-offset);
   }
   body {
     @apply bg-canvas text-ink font-sans antialiased;
@@ -227,7 +239,7 @@
 /* Article body typography (CMS HTML) */
 @layer components {
   .prose-ar {
-    @apply text-[1.0625rem] leading-[2.05] text-ink-soft sm:text-lg sm:leading-[2.1];
+    @apply text-base leading-[1.95] text-ink-soft sm:text-[1.0625rem] sm:leading-[2];
     overflow-wrap: break-word;
   }
   .prose-ar > * + * {
@@ -237,10 +249,14 @@
     color: inherit;
   }
   .prose-ar h2 {
-    @apply mt-[2em] mb-[0.6em] text-h2 font-semibold text-ink sm:text-[1.5rem];
+    @apply mt-[2em] mb-[0.6em] text-h2 font-semibold text-ink;
   }
   .prose-ar h3 {
-    @apply mt-[1.8em] mb-[0.5em] text-h3 font-semibold text-ink sm:text-[1.25rem];
+    @apply mt-[1.8em] mb-[0.5em] text-h3 font-semibold text-ink;
+  }
+  /* Heading anchors (TOC and #hash links) land just below the sticky header. */
+  .prose-ar :is(h2, h3, h4) {
+    scroll-margin-top: var(--anchor-offset);
   }
   .prose-ar h4,
   .prose-ar h5,
@@ -276,7 +292,7 @@
     color: var(--color-brand-500);
   }
   .prose-ar blockquote {
-    @apply relative my-[1.8em] rounded-(--radius-card) bg-brand-100/80 px-6 pt-12 pb-6 text-[1.125rem] leading-[2] font-medium text-brand-800 sm:px-8 sm:text-[1.25rem];
+    @apply relative my-[1.8em] rounded-(--radius-card) bg-brand-100/80 px-6 pt-12 pb-6 text-[1.125rem] leading-[2] font-medium text-brand-800 sm:px-8;
   }
   .prose-ar blockquote::before {
     content: '“';
@@ -323,6 +339,16 @@
   }
   .prose-ar .aligncenter {
     @apply mx-auto;
+  }
+  /* Block alignment from the WordPress editor (inline text-align is kept by the sanitiser too). */
+  .prose-ar .has-text-align-center {
+    text-align: center;
+  }
+  .prose-ar .has-text-align-left {
+    text-align: left;
+  }
+  .prose-ar .has-text-align-right {
+    text-align: right;
   }
 }
 

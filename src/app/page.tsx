@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { EmptyState } from '@/components/EmptyState';
 import { CategorySection } from '@/components/home/CategorySection';
 import { CtaBanner } from '@/components/home/CtaBanner';
@@ -6,14 +7,19 @@ import { EditorsPicks } from '@/components/home/EditorsPicks';
 import { HomeHero } from '@/components/home/HomeHero';
 import { LatestSection } from '@/components/home/LatestSection';
 import { MissionCard } from '@/components/home/MissionCard';
-import { NewsletterBand } from '@/components/home/NewsletterBand';
 import { VideoSection } from '@/components/home/VideoSection';
 import { AlertIcon } from '@/components/icons';
 import { JsonLd } from '@/components/JsonLd';
 import { absoluteUrl, routes } from '@/lib/routes';
-import { site } from '@/lib/site';
+import { defaultOpenGraph, feedAlternates, site } from '@/lib/site';
 
 export const revalidate = 600;
+
+/** The home page owns the site-root canonical and og:url (the root layout sets none, so other pages never inherit '/'). */
+export const metadata: Metadata = {
+  alternates: { canonical: '/', types: feedAlternates },
+  openGraph: { ...defaultOpenGraph, url: '/' },
+};
 
 export default async function HomePage() {
   const home = await loadHomepage();
@@ -47,7 +53,6 @@ export default async function HomePage() {
         <MissionCard />
         {home.video ? <VideoSection category={home.video.category} articles={home.video.items} /> : null}
         <CtaBanner logo={home.identity.logo} />
-        <NewsletterBand />
       </div>
 
       {listed.length ? (

@@ -40,9 +40,15 @@ export type ArticleSummary = {
   title: string;
   /** Plain text, no HTML. */
   excerpt: string;
-  /** ISO 8601 publication date. */
+  /** Publication time in the site's local time (no zone): use it for the displayed day. */
   date: string;
+  /** Last modification, site-local time (no zone). */
   modified: string;
+  /** Publication instant, ISO 8601 UTC (`…Z`): use it for structured data, feeds and sitemaps. */
+  published: string;
+  /** Last modification instant, ISO 8601 UTC (`…Z`). */
+  updated: string;
+  /** `name` is empty when the CMS exposes no usable author; the byline is then omitted. */
   author: Author;
   categories: Category[];
   tags: Tag[];
@@ -98,6 +104,7 @@ export type SiteIdentity = {
   icon?: string;
 };
 
+/** `modified` is ISO 8601 UTC when the source knows it. */
 export type SitemapEntry = { slug: string; modified: string };
 
 export interface ContentSource {

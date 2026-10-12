@@ -26,7 +26,7 @@ const REVALIDATE = Number(process.env.WP_REVALIDATE_SECONDS) || 600;
 const TIMEOUT_MS = 12_000;
 const SEARCH_INDEX_PAGES = Number(process.env.SEARCH_INDEX_PAGES) || 6;
 
-const SUMMARY_FIELDS = 'id,slug,title,excerpt,date,modified,author,categories,tags,featured_media,sticky,_links,_embedded';
+const SUMMARY_FIELDS = 'id,slug,title,excerpt,date,date_gmt,modified,modified_gmt,author,categories,tags,featured_media,sticky,_links,_embedded';
 const EMBED = 'author,wp:featuredmedia,wp:term';
 
 type WpRendered = { rendered: string };
@@ -37,6 +37,8 @@ type WpMedia = {
   media_details?: { width?: number; height?: number; sizes?: Record<string, { source_url: string; width: number; height: number }> };
 };
 type WpUser = { id: number; name: string; slug: string; description?: string; avatar_urls?: Record<string, string> };
+/** A REST error in place of an embedded record (e.g. authors when a security plugin hides /users). */
+type WpEmbedError = { code: string };
 type WpTerm = { id: number; name: string; slug: string; taxonomy: string; description?: string; count?: number; parent?: number };
 type WpPost = {
   id: number;
@@ -44,13 +46,17 @@ type WpPost = {
   title: WpRendered;
   excerpt?: WpRendered;
   content?: WpRendered;
+  /** Site-local time without a timezone. */
   date: string;
+  /** UTC time without the trailing Z. */
+  date_gmt?: string;
   modified: string;
+  modified_gmt?: string;
   author: number;
   categories?: number[];
   tags?: number[];
   sticky?: boolean;
-  _embedded?: { author?: WpUser[]; 'wp:featuredmedia'?: (WpMedia | { code: string })[]; 'wp:term'?: WpTerm[][] };
+  _embedded?: { author?: (WpUser | WpEmbedError)[]; 'wp:featuredmedia'?: (WpMedia | WpEmbedError)[]; 'wp:term'?: WpTerm[][] };
 };
 
 class WordPressError extends Error {
@@ -62,14 +68,18 @@ class WordPressError extends Error {
   }
 }
 
-async function wp<T>(path: string, params: Record<string, string | number | boolean | undefined> = {}): Promise<{ data: T; total: number; totalPages: number }> {
+type Params = Record<string, string | number | boolean | undefined>;
+/** `fresh` skips the shared data cache (one-off requests such as full-text searches). */
+type FetchMode = { fresh?: boolean };
+
+async function wp<T>(path: string, params: Params = {}, { fresh = false }: FetchMode = {}): Promise<{ data: T; total: number; totalPages: number }> {
   const url = new URL(`${API}${path}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== '') url.searchParams.set(key, String(value));
   }
   const res = await fetch(url, {
     headers: { Accept: 'application/json' },
-    next: { revalidate: REVALIDATE, tags: ['wp'] },
+    ...(fresh ? { cache: 'no-store' as const } : { next: { revalidate: REVALIDATE, tags: ['wp'] } }),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!res.ok) {
@@ -84,9 +94,9 @@ async function wp<T>(path: string, params: Record<string, string | number | bool
 }
 
 /** WordPress answers 400 for a page number past the end; treat it as an empty page. */
-async function wpList<T>(path: string, params: Record<string, string | number | boolean | undefined>) {
+async function wpList<T>(path: string, params: Params, mode?: FetchMode) {
   try {
-    return await wp<T[]>(path, params);
+    return await wp<T[]>(path, params, mode);
   } catch (error) {
     if (error instanceof WordPressError && error.status === 400) return { data: [] as T[], total: 0, totalPages: 0 };
     throw error;
@@ -105,8 +115,15 @@ function mapImage(media: WpMedia | undefined, fallbackAlt: string): ImageRef | u
   };
 }
 
+/** A usable user record; an embed can be a REST error object instead (e.g. when /users is hidden). */
+function asUser(value: WpUser | WpEmbedError | undefined): WpUser | undefined {
+  const user = value as Partial<WpUser> | undefined;
+  return user && typeof user.name === 'string' && user.name.trim() && typeof user.slug === 'string' ? (value as WpUser) : undefined;
+}
+
+/** Without a usable author record the name stays empty and the UI omits the byline (never credit the magazine). */
 function mapAuthor(user: WpUser | undefined, id: number): Author {
-  if (!user) return { id, name: site.name, slug: '', bio: '' };
+  if (!user) return { id, name: '', slug: '', bio: '' };
   return {
     id: user.id,
     name: decodeEntities(user.name),
@@ -137,6 +154,11 @@ function cleanExcerpt(html: string): string {
   );
 }
 
+/** WordPress `*_gmt` fields are UTC without a zone designator; fall back to the site-local time. */
+function utc(gmt: string | undefined, local: string): string {
+  return gmt && !gmt.startsWith('0000') ? `${gmt.replace(/Z$/, '')}Z` : local;
+}
+
 function mapSummary(post: WpPost): ArticleSummary {
   const embedded = post._embedded ?? {};
   const media = embedded['wp:featuredmedia']?.[0];
@@ -149,7 +171,9 @@ function mapSummary(post: WpPost): ArticleSummary {
     excerpt: cleanExcerpt(post.excerpt?.rendered ?? post.content?.rendered ?? ''),
     date: post.date,
     modified: post.modified,
-    author: mapAuthor(embedded.author?.[0], post.author),
+    published: utc(post.date_gmt, post.date),
+    updated: utc(post.modified_gmt, post.modified),
+    author: mapAuthor(asUser(embedded.author?.[0]), post.author),
     categories: terms.filter((t) => t.taxonomy === 'category').map(mapTerm),
     tags: terms.filter((t) => t.taxonomy === 'post_tag').map(mapTerm),
     image: media && 'source_url' in media ? mapImage(media, title) : undefined,
@@ -206,7 +230,7 @@ export const wordpressSource: ContentSource = {
       exclude: query.exclude?.length ? query.exclude.join(',') : undefined,
       include: query.include?.length ? query.include.join(',') : undefined,
       ...orderParams(query.order),
-    });
+    }, { fresh: Boolean(query.search) });
     return { items: data.map(mapSummary), total, totalPages, page, perPage };
   },
 
@@ -252,12 +276,13 @@ export const wordpressSource: ContentSource = {
   async getAuthor(slug: string): Promise<Author | null> {
     try {
       const { data } = await wpList<WpUser>('/wp/v2/users', { slug, _fields: 'id,name,slug,description,avatar_urls' });
-      return data[0] ? mapAuthor(data[0], data[0].id) : null;
+      const user = asUser(data[0]);
+      return user ? mapAuthor(user, user.id) : null;
     } catch (error) {
       // Some security plugins hide /users; fall back to an author embedded in a post.
       console.error('[wordpress] author', (error as Error).message);
       const { data } = await wpList<WpPost>('/wp/v2/posts', { per_page: 100, _embed: 'author', _fields: 'id,author,_links,_embedded' });
-      const user = data.map((p) => p._embedded?.author?.[0]).find((u) => u && decodeSlug(u.slug) === slug);
+      const user = data.map((p) => asUser(p._embedded?.author?.[0])).find((u) => u && decodeSlug(u.slug) === slug);
       return user ? mapAuthor(user, user.id) : null;
     }
   },
@@ -284,7 +309,7 @@ export const wordpressSource: ContentSource = {
       const { data, totalPages } = await wpList<WpPost>('/wp/v2/posts', {
         _embed: EMBED,
         _fields: SUMMARY_FIELDS,
-        per_page: 50,
+        per_page: 100,
         page,
         orderby: 'date',
         order: 'desc',
@@ -299,8 +324,12 @@ export const wordpressSource: ContentSource = {
     const collect = async (path: string): Promise<SitemapEntry[]> => {
       const out: SitemapEntry[] = [];
       for (let page = 1; page <= 50; page++) {
-        const { data, totalPages } = await wpList<{ slug: string; modified: string }>(path, { per_page: 100, page, _fields: 'slug,modified' });
-        out.push(...data.map((d) => ({ slug: decodeSlug(d.slug), modified: d.modified })));
+        const { data, totalPages } = await wpList<{ slug: string; modified: string; modified_gmt?: string }>(path, {
+          per_page: 100,
+          page,
+          _fields: 'slug,modified,modified_gmt',
+        });
+        out.push(...data.map((d) => ({ slug: decodeSlug(d.slug), modified: utc(d.modified_gmt, d.modified) })));
         if (page >= totalPages) break;
       }
       return out;

@@ -4,22 +4,32 @@ import { useEffect, useRef, useState } from 'react';
 import type { Heading } from '@/lib/html';
 import { ChevronDownIcon } from '../icons';
 
-/** The heading currently being read: the last one that has passed the top zone of the viewport. */
-function currentHeading(headings: Heading[], visible: Map<string, boolean>): string | null {
-  const inZone = headings.find((h) => visible.get(h.id));
-  if (inZone) return inZone.id;
+/** Headings at or above this line (just below the sticky header) count as passed. */
+const READ_LINE = 140;
+
+/** The heading currently being read: the last one whose top has passed the reading line. */
+function currentHeading(headings: Heading[]): string | null {
   let last: string | null = null;
   for (const h of headings) {
     const el = document.getElementById(h.id);
-    if (el && el.getBoundingClientRect().top < 140) last = h.id;
+    if (!el) continue;
+    if (el.getBoundingClientRect().top >= READ_LINE) break;
+    last = h.id;
   }
   return last;
 }
 
+/** Space to leave above a heading: its own scroll-margin, else the page's scroll-padding (both clear the sticky header). */
+function topOffset(target: HTMLElement): number {
+  return parseFloat(getComputedStyle(target).scrollMarginTop) || parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+}
+
 /**
  * "محتويات المقال": links to the article's h2/h3 headings with the heading
- * being read highlighted (IntersectionObserver), smooth scrolling (unless
- * reduced motion is requested) and focus moved to the target heading.
+ * being read highlighted (recomputed on scroll, so jumps such as Home/End,
+ * deep links and restored scroll positions are covered too), smooth
+ * scrolling (unless reduced motion is requested) and focus moved to the
+ * target heading.
  *
  *  - list:        always open (desktop sidebar)
  *  - collapsible: a closed <details> above the text (phones and tablets)
@@ -29,21 +39,24 @@ export function TableOfContents({ headings, variant = 'list', className = '' }: 
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
-    if (!headings.length || !('IntersectionObserver' in window)) return;
-    const visible = new Map<string, boolean>();
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) visible.set(entry.target.id, entry.isIntersecting);
-        setActive(currentHeading(headings, visible));
-      },
-      // A band across the upper part of the viewport, below the sticky header.
-      { rootMargin: '-96px 0px -60% 0px' },
-    );
-    for (const h of headings) {
-      const el = document.getElementById(h.id);
-      if (el) io.observe(el);
-    }
-    return () => io.disconnect();
+    if (!headings.length) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setActive(currentHeading(headings));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    // Once after mount for #hash links and restored scroll positions, then on every scroll (one measurement per frame).
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, [headings]);
 
   if (!headings.length) return null;
@@ -55,9 +68,8 @@ export function TableOfContents({ headings, variant = 'list', className = '' }: 
     // Collapse the mobile list first so the measured position is final.
     if (detailsRef.current) detailsRef.current.open = false;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // Only the heading's scroll-margin (clears the sticky header); scrollIntoView would add the page's scroll-padding too.
-    const margin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
-    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - margin, behavior: reduce ? 'auto' : 'smooth' });
+    // One offset only: scrollIntoView would add the heading's scroll-margin and the page's scroll-padding together.
+    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - topOffset(target), behavior: reduce ? 'auto' : 'smooth' });
     if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
     target.focus({ preventScroll: true });
     window.history.replaceState(window.history.state, '', `#${encodeURIComponent(id)}`);

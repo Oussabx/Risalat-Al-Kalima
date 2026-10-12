@@ -26,13 +26,21 @@ export const site = {
   contactPageSlug: env('CONTACT_PAGE_SLUG') ?? 'اتصل-بنا',
 } as const;
 
+/**
+ * Site-wide Open Graph fields and the RSS discovery link. A page that sets its
+ * own `openGraph` or `alternates` replaces the root layout's object instead of
+ * merging with it, so the root layout and the home page both spread these.
+ */
+export const defaultOpenGraph = { type: 'website', siteName: site.fullName, locale: site.locale, title: site.fullName, description: site.description } as const;
+export const feedAlternates = { 'application/rss+xml': [{ url: '/feed/', title: site.fullName }] };
+
 /** Facts published by the magazine about itself (من نحن), shown on the About page. */
 export const aboutFacts = {
   mission: site.description,
   points: [
     { title: 'مجلّة فصليّة مرخّصة', body: 'تصدر بترخيص من وزارة الإعلام اللبنانيّة.' },
     { title: 'فريق من المتطوّعين', body: 'يرأس تحريرها القسّيس د. إدكار طرابلسي، ويعمل معه نحو أربعين متطوّعًا من كتّاب ومحرّرين ومصوّرين وفريق تسويق وإدارة.' },
-    { title: 'كتّاب محليّون وترجمات', body: 'نحو ٧٠٪ من المقالات لكتّاب محليّين، و٣٠٪ ترجمات تعرّف القارئ بالفكر المسيحيّ العالميّ.' },
+    { title: 'كتّاب محليّون وترجمات', body: 'نحو 70٪ من المقالات لكتّاب محليّين، و30٪ ترجمات تعرّف القارئ بالفكر المسيحيّ العالميّ.' },
     { title: 'إيمان إنجيليّ', body: 'تلتزم المجلّة بالإيمان الإنجيليّ: الكتاب المقدّس كلمة الله الموحى بها، والخلاص بالإيمان بالربّ يسوع المسيح وحده.' },
   ],
 } as const;

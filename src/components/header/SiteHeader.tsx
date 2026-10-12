@@ -1,14 +1,32 @@
-// STUB — replaced by the global shell builder.
+import { getIdentity, getNavigation, type Category } from '@/lib/content';
+import { routes } from '@/lib/routes';
+import { shortLabels, socialLinks } from '@/lib/site';
 import { Logo } from '../Logo';
-import { getIdentity } from '@/lib/content';
+import { HeaderBar } from './HeaderBar';
+import type { HeaderNavigation, NavLink } from './nav';
 
+const toLink = (category: Category): NavLink => ({
+  label: shortLabels[category.name] ?? category.name,
+  name: category.name,
+  href: routes.category(category.slug),
+});
+
+/**
+ * Site header (server). Reads the identity (original logo) and the live
+ * category navigation, then hands plain data to the interactive HeaderBar.
+ */
 export async function SiteHeader() {
-  const identity = await getIdentity();
+  const [identity, navigation] = await Promise.all([getIdentity(), getNavigation()]);
+  const nav: HeaderNavigation = {
+    primary: navigation.primary.map(toLink),
+    groups: navigation.groups.map((group) => ({ title: group.title, links: group.categories.map(toLink) })),
+  };
   return (
-    <header data-site-header className="border-b border-line bg-white">
-      <div className="container-site flex h-16 items-center justify-center">
-        <Logo logo={identity.logo} />
-      </div>
-    </header>
+    <HeaderBar
+      logo={<Logo logo={identity.logo} className="min-h-11" />}
+      drawerLogo={<Logo logo={identity.logo} size="sm" className="min-h-11" />}
+      navigation={nav}
+      social={socialLinks}
+    />
   );
 }
